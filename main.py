@@ -1,157 +1,173 @@
 """
-    File name: main.py
-    Author: Maxlero
-    Variant: 11
-    Date created: 18/02/2018
+    Автор: Орел Максим
+    Группа: КБ-161
+    Вариант: 11
+    Дата создания: 18/02/2018
     Python Version: 3.6
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sympy import diff, symbols, exp
+from scipy.misc import derivative
 
 # Constants
 accuracy = 0.00001
 iterations = 0
+a = -0.5
+b = 0
+
+
+def draw(function_f, x1, x2, y1, y2, x_left, x_right):
+    x = np.arange(x_left, x_right, 0.01)
+
+    plt.plot(x, function_f(x))
+    plt.axis([x1, x2, y1, y2])
+    plt.grid(True)
+    plt.axhline(y=0, color='k')
+    plt.axvline(x=0, color='k')
+    plt.show()
 
 
 def f(x):
     return np.exp(-x) - 5 * x ** 2 + 10 * x
 
 
+def diff_f(point):
+    return derivative(f, point, dx=1e-6)
+
+
+def max_diff(a, b):
+    step = 0.01  # шаг
+    max_value = 0  # максимальное значение
+    array = np.arange(a, b + step, step)
+    for i in array:
+        if abs(diff_f(i)) > abs(max_value):
+            max_value = diff_f(i)
+    return max_value
+
+
+def g(x, l):
+    return x - l * f(x)
+
+
 def bisection(left, right):
     global iterations
     global accuracy
 
-    if f(left) * f(right) < 0:
-        x = (left + right) / 2
-        if f(x) != 0 and abs(f(x)) > accuracy:
-            iterations += 1
-            if f(left) * f(x) < 0:
-                bisection(left, x)
-            else:
-                bisection(x, right)
+    x = (left + right) / 2
+    if f(x) != 0 and abs(f(x)) > accuracy:
+        iterations += 1
+        if f(left) * f(x) < 0:
+            bisection(left, x)
         else:
-            print(str(iterations) + " iterations; x = " + str("%.9f" % x) +
-                  "; f(x) = " + str("%.9f" % f(x)) +
-                  " <= " + str("%.5f" % accuracy))
+            bisection(x, right)
     else:
-        print("No root on [" + str(left) + ", " + str(right) + "].")
+        print("Корень: " + str("%.9f" % x))
+        print("Количество итераций: " + str(iterations))
+        print("Проверка: f(x) = " + str("%.2e" % f(x)) +
+              " <= " + str(accuracy))
 
 
-def draw():
-    x = np.arange(-5.0, 5.0, 0.1)
-
-    plt.plot(x, f(x))
-    plt.axis([-2, 4, -2, 7])
-    plt.grid(True)
-    plt.axhline(y=0, color='k')
-    plt.axvline(x=0, color='k')
-    plt.show()
-
-
-def draw2():
-    # f(x) = x
-    # f(x) = - e^(-x) / 10 + x^2 / 2
-    x = np.arange(-5.0, 5.0, 0.1)
-
-    plt.plot(x, x)
-    plt.plot(x, -np.exp(-x) / 10 + x ** 2 / 2)
-    plt.axis([-2, 4, -2, 7])
-    plt.grid(True)
-    plt.axhline(y=0, color='k')
-    plt.axvline(x=0, color='k')
-    plt.show()
-
-
-def draw3():
-    # f'(x) = - e^(-x) - 10 * x + 10
-    # f'(x) > 0 on [-0.5, 0]
-    x = np.arange(-0.5, 0, 0.01)
-
-    plt.plot(x, - np.exp(-x) - 10 * x + 10)
-    plt.axis([-2, 2, -1, 15])
-    plt.grid(True)
-    plt.axhline(y=0, color='k')
-    plt.axvline(x=0, color='k')
-    plt.show()
-
-
-def g(x):
-    # M = max|f'(x)| on [a, b]
-    M = abs(- np.exp(0.5) - 10 * (-0.5) + 10)
-    l = 1 / M
-    return x - l * (np.exp(-x) - 5 * x ** 2 + 10 * x)
-
-
-def iteration(x0):
+def iteration(x0, l):
     global iterations
     global accuracy
 
-    if abs(f(x0)) > accuracy:
+    if f(x0) != 0 and abs(f(x0)) > accuracy:
         iterations += 1
-        x = g(x0)
-        iteration(x)
+        x = g(x0, l)
+        iteration(x, l)
     else:
-        print(str(iterations) + " iterations; x = " + str("%.9f" % x0) +
-              "; f(x) = " + str("%.9f" % f(x0)) +
-              " <= " + str("%.5f" % accuracy))
+        print("Корень: " + str("%.9f" % x0))
+        print("Количество итераций: " + str(iterations))
+        print("Проверка: f(x) = " + str("%.2e" % f(x0)) +
+              " <= " + str(accuracy))
 
 
 def k(x):
-    # f(x) = e^(-x) - 5 * x^2 + 10 * x
-    # f'(x) = - e^(-x) - 10 * x + 10
-    return x - f(x) / (-np.exp(-x) - 10 * x + 10)
+    return x - f(x) / diff_f(x)
 
 
 def newton(x0):
     global iterations
     global accuracy
 
-    if abs(f(x0)) > accuracy:
+    if f(x0) != 0 and abs(f(x0)) > accuracy:
         iterations += 1
         x = k(x0)
         newton(x)
     else:
-        print(str(iterations) + " iterations; x = " + str("%.9f" % x0) +
-              "; f(x) = " + str("%.9f" % f(x0)) +
-              " <= " + str("%.5f" % accuracy))
+        print("Корень: " + str("%.9f" % x0))
+        print("Количество итераций: " + str(iterations))
+        print("Проверка: f(x) = " + str("%.2e" % f(x0)) +
+              " <= " + str(accuracy))
+
+
+def enter_values():
+    while True:
+        try:
+            a = float(input("Введите левый промежуток: "))
+            b = float(input("Введите правый промежуток: "))
+
+            # Сделаем проверку, если ли корень на промежутке
+            if f(a) * f(b) < 0:
+                print("Кажется на промежутке [" + str(a) + ", " + str(b) + "] есть один или несколько корней.")
+                break
+            else:
+                print("Кажется на введенном промежутке нет корня. Попробуйте еще раз..")
+
+        except ValueError:
+            print("Кажется с промежутком что-то не так. Попробуйте другой..")
+
+    return a, b
 
 
 if __name__ == "__main__":
-    draw()
-    a = -0.5
-    b = 0
-
+    # TODO rename files
     ####################################################################################################################
-    # bisection method
+    print("___________________________________________________________________________________________________________")
+    print("Подготовительные действия:")
     ####################################################################################################################
 
-    iterations = 0
-    bisection(a, b)
+    # нарисуем функцию
+    draw(f, -10, 10, -100, 100, -10, 10)
+
+    # введем промежуток
+    a, b = enter_values()
+    # a, b = -0.5, 0
+
+    # за начальное приближение возьмем середину отрезка
+    x0 = (a + b) / 2
 
     ####################################################################################################################
-    # iteration method
+    print("___________________________________________________________________________________________________________")
+    print("Метод деления пополам:")
     ####################################################################################################################
-
-    # f(x) = e^(-x) - 5 * x^2 + 10 * x
-    draw2()
-
-    # f'(x) = - e^(-x) - 10 * x + 10
-    # x = symbols('x')
-    # print(diff(exp(-x) - 5 * x ** 2 + 10 * x))
-    draw3()
-
-    # next x = g(x) = x - l * f(x) = x - l * (e^(-x) - 5 * x^2 + 10 * x)
-    iterations = 0
-    x0 = -.25
-    iteration(x0)
-
+    try:
+        iterations = 0
+        bisection(a, b)
+    except:
+        print("Что-то пошло не так.. Возможно, на промежутке несколько корней.")
     ####################################################################################################################
-    # Newton method
+    print("___________________________________________________________________________________________________________")
+    print("Метод итераций:")
     ####################################################################################################################
+    try:
+        # нарисуем производную на промежутке [a, b]
+        draw(diff_f, -25, 25, -25, 25, a, b)
 
-    # x = x0 - f(x0)/f'(x0)
-    iterations = 0
-    x0 = -.25
-    newton(x0)
+        # найдем l = 1 / M = 1 / max|f'(x)| on [a, b]
+        l = 1 / max_diff(a, b)
+
+        iterations = 0
+        iteration(x0, l)
+    except:
+        print("Что-то пошло не так.. Возможно, на промежутке несколько корней.")
+    # ####################################################################################################################
+    print("___________________________________________________________________________________________________________")
+    print("Метод Ньютона:")
+    # ####################################################################################################################
+    try:
+        iterations = 0
+        newton(x0)
+    except:
+        print("Что-то пошло не так.. Возможно, на промежутке несколько корней.")
